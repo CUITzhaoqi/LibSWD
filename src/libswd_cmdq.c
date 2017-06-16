@@ -240,7 +240,7 @@ int libswd_cmdq_flush(libswd_ctx_t *libswdctx, libswd_cmd_t **cmdq, libswd_opera
   }
   res=libswd_drv_transmit(libswdctx, cmd);
   if (res<0) return res;
-  cmdcnt=+res;
+  cmdcnt+=res;
   if (cmd==lastcmd) break;
  }
  *cmdq=cmd;

@@ -284,7 +284,7 @@ int libswd_cmd_enqueue_miso_n_data_p(libswd_ctx_t *libswdctx, int **data, char *
  for (i=0;i<=count;i++){
   res=libswd_cmd_enqueue_miso_data_p(libswdctx, &data[i], &parity[i]);
   if (res<2) return LIBSWD_ERROR_RESULT;
-  cmdcnt=+res;
+  cmdcnt+=res;
  }
  return cmdcnt;
 }
@@ -321,12 +321,12 @@ int libswd_cmd_enqueue_mosi_data_ap(libswd_ctx_t *libswdctx, int *data){
  char parity;
  res=libswd_cmd_enqueue_mosi_data(libswdctx, data);
  if (res<1) return res;
- cmdcnt=+res;
+ cmdcnt+=res;
  res=libswd_bin32_parity_even(data, &parity);
  if (res<0) return res;
  res=libswd_cmd_enqueue_mosi_parity(libswdctx, &parity);
  if (res<1) return res;
- cmdcnt=+res;
+ cmdcnt+=res;
  return cmdcnt; // should be 2 or 3 on success
 }
 
@@ -342,10 +342,10 @@ int libswd_cmd_enqueue_mosi_data_p(libswd_ctx_t *libswdctx, int *data, char *par
  int res, cmdcnt=0;
  res=libswd_cmd_enqueue_mosi_data(libswdctx, data);
  if (res<1) return res;
- cmdcnt=+res;
+ cmdcnt+=res;
  res=libswd_cmd_enqueue_mosi_parity(libswdctx, parity);
  if (res<1) return res;
- cmdcnt=+res;
+ cmdcnt+=res;
  return cmdcnt; // should be 2 or 3 on success
 }
 
@@ -363,7 +363,7 @@ int libswd_cmd_enqueue_mosi_n_data_ap(libswd_ctx_t *libswdctx, int **data, int c
  for (i=0;i<count;i++){
   res=libswd_cmd_enqueue_mosi_data(libswdctx, data[i]);
   if (res<1) return res;
-  cmdcnt=+res;
+  cmdcnt+=res;
  }
  return cmdcnt;
 }
@@ -383,7 +383,7 @@ int libswd_cmd_enqueue_mosi_n_data_p(libswd_ctx_t *libswdctx, int **data, char *
  for (i=0;i<count;i++){
   res=libswd_cmd_enqueue_mosi_data_p(libswdctx, data[i], parity[i]);
   if (res<1) return res;
-  cmdcnt=+res;
+  cmdcnt+=res;
  }
  return cmdcnt;
 }
@@ -432,7 +432,7 @@ int libswd_cmd_enqueue_mosi_control(libswd_ctx_t *libswdctx, char *ctlmsg, int l
   cmd->bits=sizeof(ctlmsg[elm])*LIBSWD_DATA_BYTESIZE;
   res=libswd_cmd_enqueue(libswdctx, cmd);
   if (res<1) break;
-  cmdcnt=+res;
+  cmdcnt+=res;
  }
  //If there was problem enqueueing elements, rollback changes on queue.
  if (res<1){
