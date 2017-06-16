@@ -50,6 +50,7 @@
 
 /** Append selected command to a context's command queue (libswdctx->cmdq).
  * This function does not update the libswdctx->cmdq pointer (its updated on flush).
+ * Limitation to CMD queue len is handled here.
  * \param *libswdctx swd context pointer containing the command queue.
  * \param *cmd command to be appended to the context's command queue.
  * \return number of elements appended or LIBSWD_ERROR_CODE on failure.
@@ -57,7 +58,20 @@
 int libswd_cmd_enqueue(libswd_ctx_t *libswdctx, libswd_cmd_t *cmd){
  if (libswdctx==NULL || cmd==NULL) return LIBSWD_ERROR_NULLPOINTER;
  int res;
- res=libswd_cmdq_append(libswdctx->cmdq, cmd);
+ if (libswdctx->config.maxcmdqlen!=0){
+	 while (libswdctx->stats.cmdqlen >= libswdctx->config.maxcmdqlen){
+		 libswd_cmd_t *cmd;
+		 cmd=libswd_cmdq_find_head(libswdctx->cmdq);
+		 if ((cmd->done!=1) || (cmd==libswdctx->cmdq)){
+			 //Need to release memory, but this CMD in queue is not yet handled, so we can`t remove it
+			 return LIBSWD_ERROR_OUTOFMEM;
+		 } else {
+			 res=libswd_cmdq_free_one_element(libswdctx, cmd);
+			 if (res<1) return LIBSWD_ERROR_QUEUE;
+		 }
+	 }
+ }
+ res=libswd_cmdq_append(libswdctx, cmd);
  return res;
 }
 
@@ -149,7 +163,7 @@ int libswd_cmd_enqueue_miso_nbit(libswd_ctx_t *libswdctx, char **data, int count
  }
  //If there was problem enqueueing elements, rollback changes on queue.
  if (res<1) {
-  res2=libswd_cmdq_free_tail(oldcmdq);
+  res2=libswd_cmdq_free_tail(libswdctx, oldcmdq);
   if (res2<0) return res2;
   return res;
  } else return cmdcnt;
@@ -187,7 +201,7 @@ int i;
  }
  //If there was problem enqueueing elements, rollback changes on queue.
  if (res<1){
-  res2=libswd_cmdq_free_tail(oldcmdq);
+  res2=libswd_cmdq_free_tail(libswdctx, oldcmdq);
   if (res2<0) return res2;
   libswdctx->cmdq=oldcmdq;
   return res;
@@ -436,7 +450,7 @@ int libswd_cmd_enqueue_mosi_control(libswd_ctx_t *libswdctx, char *ctlmsg, int l
  }
  //If there was problem enqueueing elements, rollback changes on queue.
  if (res<1){
-  res2=libswd_cmdq_free_tail(oldcmdq);
+  res2=libswd_cmdq_free_tail(libswdctx, oldcmdq);
   if (res2<0) return res2;
   libswdctx->cmdq=oldcmdq;
   return res;
